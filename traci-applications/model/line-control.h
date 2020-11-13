@@ -8,8 +8,10 @@
 #include "ns3/address.h"
 #include "ns3/ipv4-address.h"
 #include "ns3/traced-callback.h"
+#include "ns3/node.h"
 #include <vector>
 #include <string>
+#include "sumo-ns3-control-util.h"
 
 namespace ns3 {
 
@@ -28,6 +30,8 @@ public:
     StopApplication();
   }
 
+  LineControl* GetController(Ptr<Node> node);
+
 protected:
   virtual void DoDispose (void);
 
@@ -35,8 +39,10 @@ private:
   virtual void StartApplication(void);
   virtual void StopApplication(void);
 
-  void checkScenario(Time interval);
 
+
+public:  // change to public api for other module to use
+  void checkScenario(Time interval);
   // From sumo to ns3 : car info
   std::string GetRoadID();
   POS GetPosition();

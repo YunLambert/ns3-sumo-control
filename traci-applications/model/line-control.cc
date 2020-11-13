@@ -69,18 +69,26 @@ namespace ns3
 
   LineControl::LineControl() {
     NS_LOG_FUNCTION(this);
-    //m_event = EventId ();
     m_velocity = 0;
+    LineControlMap[this->GetNode()] = this;
   }
   
   LineControl::~LineControl(){};
+
+  LineControl* LineControl::GetController(Ptr<Node> node) {
+      if (LineControlMap.count(node) == 0) {
+          std::cerr<<"[ERROR] No such node find in the simulation!"<<std::endl;
+          //NS_LOG_ERROR("No such node find in the simulation!");
+      }
+      return LineControlMap[node];
+  }
 
   void LineControl::DoDispose (void) {
     NS_LOG_FUNCTION(this);
     Application::DoDispose ();
   }
 
-  void LineControl::LineControl::StartApplication(void) { 
+  void LineControl::StartApplication(void) { 
     checkScenario(Seconds(0.0));
     Simulator::Schedule(Seconds(10.0), &LineControl::checkScenario, this, m_interval);
   }
@@ -91,6 +99,7 @@ namespace ns3
 
   // Period call this function to check the scenario
   void LineControl::checkScenario(Time interval) {
+    /*
     if (this->GetNode() == nullptr) return;
     //@todo: add more check condition by wyy
     
@@ -131,6 +140,7 @@ namespace ns3
         std::cout<<vehicleId<<" may leave the simulation."<<std::endl;
         return;
     }
+    */
 
 
     Simulator::Schedule(interval, &LineControl::checkScenario, this, m_interval);

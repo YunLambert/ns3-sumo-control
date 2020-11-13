@@ -13,6 +13,7 @@ def build(bld):
         'helper/traffic-control-app-helper.cc',
         'model/line-control.cc',
         'helper/line-control-helper.cc',
+        'model/sumo-ns3-control-util.cc',
         ]
 
     headers = bld(features='ns3header')
@@ -21,7 +22,8 @@ def build(bld):
         'model/traffic-control-app.h',
         'helper/traffic-control-app-helper.h',
         'model/line-control.h',
-        'helper/line-control-helper.h'
+        'helper/line-control-helper.h',
+        'model/sumo-ns3-control-util.h'
         ]
 
     if bld.env.ENABLE_EXAMPLES:
