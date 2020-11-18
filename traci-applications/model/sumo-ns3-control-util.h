@@ -16,16 +16,15 @@
 namespace ns3 {
 
 class LineControl;
-extern std::map<Ptr<Node>, LineControl*> LineControlMap;  // DEPRECATED: Now it is not completely removed
+extern std::map<Ptr<Node>, LineControl*> LineControlMap;  // TODO: Should not use golbal variable, may be have some tricky methods.
 extern Ptr<TraciClient> g_traci_client;
 
-
-// Make the interface public and global, so in other module, we can use it easily.
-// TODO: Is there any better idea replace the global function ?
 void SetTraci(Ptr<TraciClient> m_client);
 double GetVelocity(Ptr<Node> node);
 void ChangeSpeed(Ptr<Node> node, double vel);
 void ChangeMaxSpeed(Ptr<Node> node, double vel);
+void setSignal(Ptr<Node> node, int signal_num);
+int getSignal(Ptr<Node> node);
 
 
 } // namespace ns3

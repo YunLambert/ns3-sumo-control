@@ -269,6 +269,49 @@ namespace ns3
     Simulator::Schedule(m_synchInterval, &TraciClient::SumoSimulationStep, this);
   }
 
+
+void
+  TraciClient::SumoControlStart()
+  {
+    NS_LOG_FUNCTION(this);
+
+    m_sumoPort = GetFreePort(m_sumoPort);
+    m_sumoCommand = GetSumoCmdString();
+
+    // start up sumo
+    int startCmd = std::system(m_sumoCommand.c_str());
+    if (startCmd)
+      {
+        NS_LOG_INFO("Used the following command to start up sumo: " << m_sumoCommand);
+      }
+
+    // wait 1 sec (=1e6 microsec) until sumo opens socket for traci connection
+    std::cout << "Sumo: wait for socket: " << m_sumoWaitForSocket.GetSeconds() << "s" << std::endl;
+    usleep(m_sumoWaitForSocket.GetMicroSeconds());
+
+    // connect to sumo via traci
+    try
+      {
+        this->TraCIAPI::connect("localhost", m_sumoPort);
+      }
+    catch (std::exception& e)
+      {
+        NS_FATAL_ERROR("Can not connect to sumo via traci: " << e.what());
+      }
+
+    // start sumo and simulate until the specified time
+    this->TraCIAPI::simulationStep(m_startTime.GetSeconds());
+
+    // synchronise sumo vehicles with ns3 nodes
+    SynchroniseVehicleNodeMap();
+
+    // get current positions from sumo and uptdate positions
+    UpdatePositions();
+
+    // schedule event to command sumo the next simulation step
+    Simulator::Schedule(m_synchInterval, &TraciClient::SumoSimulationStep, this);
+  }
+
   void
   TraciClient::SumoSimulationStep()
   {

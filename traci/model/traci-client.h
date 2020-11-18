@@ -52,6 +52,7 @@ public:
 
   // start up sumo; pass function pointers for including and excluding node functions
   void SumoSetup(std::function<Ptr<Node>()> includeNode, std::function<void(Ptr<Node>)> excludeNode);
+  void SumoControlStart();
 
   void SumoStop();
 

@@ -70,18 +70,9 @@ namespace ns3
   LineControl::LineControl() {
     NS_LOG_FUNCTION(this);
     m_velocity = 0;
-    LineControlMap[this->GetNode()] = this;
   }
   
   LineControl::~LineControl(){};
-
-  LineControl* LineControl::GetController(Ptr<Node> node) {
-      if (LineControlMap.count(node) == 0) {
-          std::cerr<<"[ERROR] No such node find in the simulation!"<<std::endl;
-          //NS_LOG_ERROR("No such node find in the simulation!");
-      }
-      return LineControlMap[node];
-  }
 
   void LineControl::DoDispose (void) {
     NS_LOG_FUNCTION(this);
@@ -99,7 +90,7 @@ namespace ns3
 
   // Period call this function to check the scenario
   void LineControl::checkScenario(Time interval) {
-    /*
+    
     if (this->GetNode() == nullptr) return;
     //@todo: add more check condition by wyy
     
@@ -110,7 +101,9 @@ namespace ns3
     const std::string vehicleId = m_client->GetVehicleId(this->GetNode());
 
     if (vehicleId == "") return;
+
     if (vehicleId == "veh0") {
+
       if (GetPosition().first >= 230 && GetPosition().first < 260) { // Tips: the coordinate is different between sumo and xml
         std::cout<<"============target area 1=============="<<std::endl;
         //ChangeMaxSpeed(10);
@@ -129,9 +122,12 @@ namespace ns3
       }
     }
 
+
+
     // Get sumo info
     POS v_pos = GetPosition();
     double v_vel = GetVelocity();
+
 
     if (v_pos.first != -1 && v_pos.second != -1 && v_vel != -1) {
         std::cout<<vehicleId<<": position ("<<v_pos.first<<", "<<v_pos.second<<") speed "<<v_vel<<"m/s"<<std::endl;
@@ -140,13 +136,11 @@ namespace ns3
         std::cout<<vehicleId<<" may leave the simulation."<<std::endl;
         return;
     }
-    */
-
 
     Simulator::Schedule(interval, &LineControl::checkScenario, this, m_interval);
   }
-  
-  std::string LineControl::GetRoadID() {  // like "1to2", "2to3" in xx.edge.xml
+
+   std::string LineControl::GetRoadID() {  // like "1to2", "2to3" in xx.edge.xml
     if (this->GetNode() == nullptr) return "";
     const std::string vehicleId = m_client->GetVehicleId(this->GetNode());
     if (vehicleId == "") return "";

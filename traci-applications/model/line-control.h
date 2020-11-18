@@ -11,7 +11,7 @@
 #include "ns3/node.h"
 #include <vector>
 #include <string>
-#include "sumo-ns3-control-util.h"
+
 
 namespace ns3 {
 
@@ -29,8 +29,6 @@ public:
   void StopControlNow() {
     StopApplication();
   }
-
-  LineControl* GetController(Ptr<Node> node);
 
 protected:
   virtual void DoDispose (void);

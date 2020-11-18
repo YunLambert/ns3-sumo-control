@@ -20,10 +20,49 @@
 #include "ns3/point-to-point-module.h"
 #include "ns3/applications-module.h"
 #include "ns3/sumo-ns3-control-util.h"
+#include <iostream>
 
 using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("FirstScriptExample");
+
+Ptr<Node> car, bus;
+
+void ReceivePacket (Ptr<Socket> socket) {
+   NS_LOG_INFO ("Received one packet!");
+   Ptr<Packet> packet = socket->Recv ();
+   uint8_t buffer[4];
+   packet->CopyData(buffer, 4);
+   if (int(buffer[0]) == 1 && int(buffer[1]) == 0) {
+      ChangeSpeed(car, 0);
+      std::cout<<"Car Receive brake and slow down!!!"<<std::endl;  
+   }
+   if (int(buffer[0]) == 1 && int(buffer[1]) == 1) {
+      ChangeSpeed(car, 2);
+      std::cout<<"Car restart!!"<<std::endl; 
+   }
+ }
+ 
+void SendBrake (Ptr<Socket> socket) {
+     uint8_t brake_info[4] = {0};
+     brake_info[0] = 1;
+     ChangeSpeed(bus, 0);
+     setSignal(bus, 8); // set brake light
+     Ptr<Packet> packet = Create<Packet>(brake_info, 10);
+     socket->Send (packet);
+     //Simulator::Schedule (Seconds(50), &SendBrake, socket);
+}
+
+void SendRestart(Ptr<Socket> socket) {
+     uint8_t data_info[4] = {0};
+     data_info[0] = 1, data_info[1] = 1;  // TODO use packet-header to make data packet
+     ChangeSpeed(bus, 1);
+     Ptr<Packet> packet = Create<Packet>(data_info, 10);
+     socket->Send (packet);
+}
+
+
+
 
 int
 main (int argc, char *argv[])
@@ -32,8 +71,8 @@ main (int argc, char *argv[])
   cmd.Parse (argc, argv);
   
   Time::SetResolution (Time::NS);
-  LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
-  LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
+  //LogComponentEnable ("UdpEchoClientApplication", LOG_LEVEL_INFO);
+  //LogComponentEnable ("UdpEchoServerApplication", LOG_LEVEL_INFO);
 
   NodeContainer nodes;
   nodes.Create (2);
@@ -44,7 +83,7 @@ main (int argc, char *argv[])
 
   NetDeviceContainer devices;
   devices = pointToPoint.Install (nodes);
-  nodes.Create(1);
+  //nodes.Create(1);
 
   uint32_t nodeCounter(0);
 
@@ -74,11 +113,18 @@ main (int argc, char *argv[])
 
 
   SetTraci(sumoClient);
-  Ipv4AddressHelper address;
+  //g_traci_client->SumoControlStart();
+   Ipv4AddressHelper address;
   address.SetBase ("10.1.1.0", "255.255.255.0");
   InternetStackHelper stack;
   stack.Install (nodes);
   Ipv4InterfaceContainer interfaces = address.Assign (devices);
+
+  TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
+  Ptr<Socket> recvSink, source;
+  InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), 4477);
+  InetSocketAddress remote = InetSocketAddress (interfaces.GetAddress (1), 4477); // because i know it;s from 0 -> 2
+
 
 // callback function for node creation
   std::function<Ptr<Node> ()> setupNewWifiNode = [&] () -> Ptr<Node>
@@ -86,23 +132,37 @@ main (int argc, char *argv[])
       if (nodeCounter >= nodes.GetN())
         NS_FATAL_ERROR("Node Pool empty!: " << nodeCounter << " nodes created.");
       Ptr<Node> includedNode = nodes.Get(nodeCounter);
-      
       if (nodeCounter == 1) {
-        UdpEchoServerHelper echoServer (9);
-        ApplicationContainer serverApps = echoServer.Install (nodes.Get (1));
-        serverApps.Start (Seconds (0.0));
-        serverApps.Stop (Seconds (10.0));
+
+        recvSink = Socket::CreateSocket (nodes.Get (1), tid);
+        car = nodes.Get(1);
+        recvSink->Bind (local);
+        recvSink->SetRecvCallback (MakeCallback (ReceivePacket));
+
+
+UdpEchoServerHelper echoServer (9);
+
+  ApplicationContainer serverApps = echoServer.Install (nodes.Get (1));
+  serverApps.Start (Seconds (140.0));
+  serverApps.Stop (Seconds (200.0));
       }
       if (nodeCounter == 0) {
+         bus = nodes.Get(0);
+         source = Socket::CreateSocket (nodes.Get (0), tid);
+         source->Connect(remote);
+       UdpEchoClientHelper echoClient (interfaces.GetAddress (1), 9);
+  echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
+  echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
+  echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
 
-      UdpEchoClientHelper echoClient (interfaces.GetAddress (1), 9);
-      echoClient.SetAttribute ("MaxPackets", UintegerValue (1));
-      echoClient.SetAttribute ("Interval", TimeValue (Seconds (1.0)));
-      echoClient.SetAttribute ("PacketSize", UintegerValue (1024));
+  ApplicationContainer clientApps = echoClient.Install (nodes.Get (0));
+  Simulator::ScheduleWithContext (source->GetNode ()->GetId (),
+                                   Seconds (120), &SendBrake, source); // make brake event!
 
-      ApplicationContainer clientApps = echoClient.Install (nodes.Get (0));
-      clientApps.Start (Seconds (1.0));
-      clientApps.Stop (Seconds (10.0));
+  Simulator::ScheduleWithContext (source->GetNode ()->GetId (),
+                                   Seconds (150), &SendRestart, source); // make restart event!
+  clientApps.Start (Seconds (150.0));
+  clientApps.Stop (Seconds (200.0));
       }
 
 
@@ -110,7 +170,7 @@ main (int argc, char *argv[])
       return includedNode;
     };
 
-// callback function for node shutdown
+  // callback function for node shutdown
   std::function<void (Ptr<Node>)> shutdownWifiNode = [] (Ptr<Node> exNode)
     {
       return nullptr;
@@ -118,6 +178,17 @@ main (int argc, char *argv[])
 
   // start traci client with given function pointers
   g_traci_client->SumoSetup (setupNewWifiNode, shutdownWifiNode);
+
+  //LineControlHelper lineControl;
+  //lineControl.SetAttribute("Interval", TimeValue(Seconds(1.0)));
+  //lineControl.SetAttribute ("Client", (PointerValue) (sumoClient));
+
+
+ 
+
+  
+
+ 
 
   Simulator::Run ();
   Simulator::Destroy ();
