@@ -20,11 +20,14 @@
 #include "ns3/mobility-module.h"
 #include "ns3/traci-applications-module.h"
 #include "ns3/traci-module.h"
+#include "ns3/sumo-ns3-control-util.h"
 #include <cmath>
 #include <map>
 #include <functional>
 #include <stdlib.h>
 #include <iostream>
+#include <chrono>
+#include <ctime>
 
 using namespace ns3;
 
@@ -52,7 +55,7 @@ int main (int argc, char *argv[])
 
   ns3::Time simulationTime (ns3::Seconds(500));
   NodeContainer c;
-  c.Create (3);
+  c.Create (10);
   uint32_t nodeCounter(0);
 
   MobilityHelper mobility;
@@ -68,7 +71,7 @@ int main (int argc, char *argv[])
   Ptr<TraciClient> sumoClient = CreateObject<TraciClient> ();
   sumoClient->SetAttribute ("SumoConfigPath", StringValue ("src/traci/examples/line-simple/line.sumo.cfg"));
   sumoClient->SetAttribute ("SumoBinaryPath", StringValue ("/usr/bin/"));    // use system installation of sumo
-  sumoClient->SetAttribute ("SynchInterval", TimeValue (Seconds (0.1)));
+  sumoClient->SetAttribute ("SynchInterval", TimeValue (MilliSeconds (20)));
   sumoClient->SetAttribute ("StartTime", TimeValue (Seconds (0.0)));
   sumoClient->SetAttribute ("SumoGUI", BooleanValue (true));
   sumoClient->SetAttribute ("SumoPort", UintegerValue (3400));
@@ -80,7 +83,7 @@ int main (int argc, char *argv[])
   sumoClient->SetAttribute ("SumoWaitForSocket", TimeValue (Seconds (1.0)));
 
   LineControlHelper lineControl;
-  lineControl.SetAttribute("Interval", TimeValue(Seconds(1.0)));
+  lineControl.SetAttribute("Interval", TimeValue(MilliSeconds(20)));
   lineControl.SetAttribute ("Client", (PointerValue) (sumoClient));
 
 // callback function for node creation
@@ -91,7 +94,31 @@ int main (int argc, char *argv[])
 
       // don't create and install the protocol stack of the node at simulation time -> take from "node pool"
       Ptr<Node> includedNode = c.Get(nodeCounter);
+
+      if (nodeCounter == 0) {
+        SetMyCallback([](std::string type, std::string msg) {
+          std::cout<<"Get "<<type<<" send "<<msg<<std::endl;
+        });
+      }
+
       ++nodeCounter;// increment counter for next node
+
+      m_all_nodes.push_back(includedNode);
+      // DEBUG: For time sync test 2021-1-3
+      using namespace std::chrono;
+
+      std::cout<<"=== car ID: "<<nodeCounter<<" enter into the map ==="<<std::endl;
+
+      // Phusical time:
+      system_clock::time_point now = system_clock::now();
+      std::chrono::nanoseconds d = now.time_since_epoch();
+      std::chrono::milliseconds millsec = std::chrono::duration_cast<std::chrono::milliseconds>(d);
+      std::cout<<"Real Physical Time:"<<millsec.count()<<"ms"<<std::endl;
+
+      // Ns3 simulation time:
+      std::cout<<"Ns3 Simulation Time:"<<Simulator::Now().GetMilliSeconds()<<"ms"<<std::endl;
+
+
 
       // Install Application
       ApplicationContainer LineControlApps = lineControl.Install (includedNode);

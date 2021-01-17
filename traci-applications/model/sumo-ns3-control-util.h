@@ -15,9 +15,18 @@
 
 namespace ns3 {
 
+using EventCallback = std::function<void(std::string event_type, std::string msg)>;
+
 class LineControl;
 extern std::map<Ptr<Node>, LineControl*> LineControlMap;  // TODO: Should not use golbal variable, may be have some tricky methods.
 extern Ptr<TraciClient> g_traci_client;
+extern std::vector<Ptr<Node>> m_all_nodes;
+
+extern bool flag_test;
+
+extern EventCallback cb_;
+
+void SetMyCallback(EventCallback cb);
 
 void SetTraci(Ptr<TraciClient> m_client);
 double GetVelocity(Ptr<Node> node);

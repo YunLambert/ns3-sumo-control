@@ -35,6 +35,10 @@
 #include "ns3/trace-source-accessor.h"
 #include "line-control.h"
 
+#include <chrono>
+#include <ctime>
+#include "sumo-ns3-control-util.h"
+
 namespace ns3
 {
 
@@ -91,9 +95,34 @@ namespace ns3
   // Period call this function to check the scenario
   void LineControl::checkScenario(Time interval) {
     
+    /*
+    // test 10 cars
     if (this->GetNode() == nullptr) return;
-    //@todo: add more check condition by wyy
-    
+    if (!flag_test) {
+      if (m_all_nodes.size() == 10) {
+        using namespace std::chrono;
+        auto start = system_clock::now();
+        auto s1_ns3 = Simulator::Now().GetSeconds();
+        std::cout<<"Nodes number:"<<m_all_nodes.size()<<std::endl;
+        for (int i = 0; i < m_all_nodes.size(); ++i) {
+          const std::string vehicleId = m_client->GetVehicleId(m_all_nodes[i]);
+          if (vehicleId == "") return;
+          libsumo::TraCIPosition pos = m_client->TraCIAPI::vehicle.getPosition(vehicleId);
+          std::cout<<vehicleId<<" position: ("<<pos.x<<", "<<pos.y<<")"<<std::endl;
+        }
+
+        auto end = system_clock::now();
+        auto s2_ns3 = Simulator::Now().GetSeconds();
+        auto duration = duration_cast<microseconds>(end - start);
+	std::cout<<"debug:"<<s1_ns3<<" "<<s2_ns3<<std::endl;
+	auto duration2 = s2_ns3 - s1_ns3;
+        std::cout <<"Duration in physical time: " << duration.count()<< "ms" << std::endl;
+        std::cout<<"Duration in ns3 simulation time: "<<duration2<<"ms"<<std::endl;
+        flag_test = true;
+      }
+    }
+    */
+
 
     // Check: if veh0(Bus).x is switch from road 1to2 to 2to3, then speed up to 10m/s
     //        if veh0(Bus).x is in [230, 260], then slow down to 3m/s
@@ -107,35 +136,55 @@ namespace ns3
       if (GetPosition().first >= 230 && GetPosition().first < 260) { // Tips: the coordinate is different between sumo and xml
         std::cout<<"============target area 1=============="<<std::endl;
         //ChangeMaxSpeed(10);
-        ChangeSpeed(3.0);
+        //ChangeSpeed(3.0);
+        cb_("target 1", "aaaaaaaaaaaaaaa");
       }
       else if (GetPosition().first >= 260) {
         std::cout<<"============target area 2=============="<<std::endl;
-        ChangeMaxSpeed(10);
-        ChangeSpeed(10);
+        //ChangeMaxSpeed(10);
+        //ChangeSpeed(10);
+        cb_("target 2", "bbbbbbbbbbbbbbbbbb");
       }
 
       else if (GetRoadID() == "2to3") {
         std::cout<<"===========veh0 switch road==============="<<std::endl;
-        ChangeMaxSpeed(10);
-        ChangeSpeed(10);
+        //ChangeMaxSpeed(10);
+        //ChangeSpeed(10);
+        cb_("target 3", "ccccccccccccccccccc");
       }
     }
 
 
+/*
+    // test to get some sumo info
+    // POS v_pos = GetPosition();
+    // double v_vel = GetVelocity();
 
-    // Get sumo info
-    POS v_pos = GetPosition();
-    double v_vel = GetVelocity();
 
+    // if (v_pos.first != -1 && v_pos.second != -1 && v_vel != -1) {
+    //     std::cout<<vehicleId<<": position ("<<v_pos.first<<", "<<v_pos.second<<") speed "<<v_vel<<"m/s"<<std::endl;
+    // }
+    // else {
+    //     std::cout<<vehicleId<<" may leave the simulation."<<std::endl;
+    //     return;
+    // }
 
-    if (v_pos.first != -1 && v_pos.second != -1 && v_vel != -1) {
-        std::cout<<vehicleId<<": position ("<<v_pos.first<<", "<<v_pos.second<<") speed "<<v_vel<<"m/s"<<std::endl;
-    }
-    else {
-        std::cout<<vehicleId<<" may leave the simulation."<<std::endl;
-        return;
-    }
+*/
+    
+
+     /*
+     // test physical and simualtion time diff
+     using namespace std::chrono;
+
+     // Physical time:
+      system_clock::time_point now = system_clock::now();
+      std::chrono::nanoseconds d = now.time_since_epoch();
+      std::chrono::milliseconds millsec = std::chrono::duration_cast<std::chrono::milliseconds>(d);
+      std::cout<<"Real Physical Time:"<<millsec.count()<<"ms"<<std::endl;
+
+      // Ns3 simulation time:
+      std::cout<<"Ns3 Simulation Time:"<<Simulator::Now().GetMilliSeconds()<<"ms"<<std::endl;
+    */
 
     Simulator::Schedule(interval, &LineControl::checkScenario, this, m_interval);
   }

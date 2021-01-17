@@ -5,7 +5,16 @@
 <route id="route0" edges="1to2 2to3 3to4 out"/>
 <vehicle depart="10" id="veh0" route="route0" type="Bus"/>
 <route id="route1" edges="1to2 2to3 3to4 out"/>
-<vehicle depart="80" id="veh1" route="route0" type="Car"/>
+<vehicle depart="20" id="veh1" route="route0" type="Car"/>
+<route id="route2" edges="3to4 out"/>
+<vehicle depart="30" id="veh2" route="route2" type="Car"/>
 
+<vehicle depart="40" id="veh3" route="route0" type="Car"/>
+<!-- <vehicle depart="50" id="veh4" route="route0" type="Car"/>
+<vehicle depart="60" id="veh5" route="route0" type="Car"/>
+<vehicle depart="70" id="veh6" route="route0" type="Car"/>
+<vehicle depart="80" id="veh7" route="route0" type="Car"/>
+<vehicle depart="90" id="veh8" route="route0" type="Car"/>
+<vehicle depart="100" id="veh9" route="route0" type="Car"/> -->
 
 </routes>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ns3/node.h"
+#include <functional>
 #include "sumo-ns3-control-util.h"
 
 namespace ns3 {
@@ -9,6 +10,16 @@ class LineControl;
 std::map<Ptr<Node>, LineControl*> LineControlMap;
 
 Ptr<TraciClient> g_traci_client;
+
+std::vector<Ptr<Node>> m_all_nodes;
+
+bool flag_test = false;
+
+EventCallback cb_ = nullptr;
+
+void SetMyCallback(EventCallback cb) {
+	cb_ = cb;
+}
 
 void SetTraci(Ptr<TraciClient> m_client) {
    g_traci_client = m_client;
@@ -52,6 +63,7 @@ int getSignal(Ptr<Node> node) {
 	if (vehicleId == "") return -1;
 	return g_traci_client->TraCIAPI::vehicle.getSignals(vehicleId);
 }
+
 
 } // namespace ns3
 

@@ -22,3 +22,9 @@ how to run in the scratch, followings will help:
 - Move the test file to the "ns3/scratch/" directory : "cp src/traci-applications/examples/line-test.cc scratch/"
 - Enter the scratch directory: " cd scratch"
 - Run: "../waf --run line-test"
+
+## What can do?
+
+1. You can add or change apis in `traci-applications/model/sumo-ns3-control-util.h`  to control sumo, such as get car(in sumo)'s information or change their speeds.
+
+2. You can add or change callback function in `traci-appications/model/sumo-ns3-control-util.h`, and bind some services logic to the callback function. Such as, find   an event happened in sumo, I can handle this event in ns3 by sending messages, or do some tricks..... 

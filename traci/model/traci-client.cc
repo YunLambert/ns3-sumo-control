@@ -30,6 +30,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <chrono>
+#include <ctime>
+
 #include "traci-client.h"
 
 namespace ns3
@@ -332,6 +335,17 @@ void
         UpdatePositions();
 
         // schedule next event to simulate next time step in sumo
+
+        using namespace std::chrono;
+
+        /// Compare Time:
+        /*
+        system_clock::time_point now = system_clock::now();
+        std::chrono::nanoseconds d = now.time_since_epoch();
+        std::chrono::milliseconds millsec = std::chrono::duration_cast<std::chrono::milliseconds>(d);
+        std::cout<<"[UPDATE] Real Physical Time:"<<millsec.count()<<"ms"<<std::endl;
+        std::cout<<"[UPDATE] traci-client update time in ns3:"<<Simulator::Now().GetMilliSeconds()<<"ms"<<std::endl;
+        */
         Simulator::Schedule(m_synchInterval, &TraciClient::SumoSimulationStep, this);
       }
     catch (std::exception& e)
